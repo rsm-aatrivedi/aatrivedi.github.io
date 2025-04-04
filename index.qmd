@@ -1,0 +1,16 @@
+---
+title: "Aashvi Trivedi"
+image: "IMG_3170.jpg"
+about: 
+    template: jolla
+    links:
+        - icon: envelope
+          href: mailto:aatrivedi@ucsd.edu
+        - icon: linkedin 
+          href: https://www.linkedin.com/in/aashvi-trivedi-6b5061218/
+
+
+---
+
+Here are a few details about me! 
+

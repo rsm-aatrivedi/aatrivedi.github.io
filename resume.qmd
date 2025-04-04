@@ -1,0 +1,5 @@
+---
+title: "Resume"
+---
+{{< pdf Resume/Aashvi-Trivedi.pdf width=100% height=800 >}}
+
