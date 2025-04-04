@@ -9,6 +9,8 @@ website:
       - href: index.qmd
         text: About
       - resume.qmd
+      - href: projects.qmd
+        text: Projects
         
 
 format:
