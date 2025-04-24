@@ -29,7 +29,7 @@ library(broom)    # for tidy regression output
 library(knitr)    # for tables
 
 # Read the data
-df <- read_dta("Blog/Project1/karlan_list_2007.dta")
+df <- read_dta("/home/jovyan/Downloads/SPRING/Marketing Analytics/HW1 MA/MA_demo/mysite/Blog/Project1/karlan_list_2007.dta")
 
 # Show the first few rows
 head(df)
