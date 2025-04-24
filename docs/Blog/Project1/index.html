@@ -916,7 +916,6 @@ F-statistic: 0.3374 on 1 and 1032 DF,  p-value: 0.5615</code></pre>
 </section>
 <section id="central-limit-theorem" class="level3">
 <h3 class="anchored" data-anchor-id="central-limit-theorem">Central Limit Theorem</h3>
-<p><em>to do: Make 4 histograms like those on slide 44 from our first class at sample sizes 50, 200, 500, and 1000 and explain these plots to the reader. To do this for a sample size of e.g.&nbsp;50, take 50 draws from each of the control and treatment distributions, and calculate the average difference between those draws. Then repeat that process 999 more times so that you have 1000 averages. Plot the histogram of those averages. Comment on whether zero is in the “middle” of the distribution or whether it’s in the “tail.”</em></p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>simulate_diffs <span class="ot">&lt;-</span> <span class="cf">function</span>(n, <span class="at">reps =</span> <span class="dv">1000</span>, <span class="at">p_control =</span> <span class="fl">0.018</span>, <span class="at">p_treatment =</span> <span class="fl">0.022</span>) {</span>
 <span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="fu">replicate</span>(reps, {</span>
