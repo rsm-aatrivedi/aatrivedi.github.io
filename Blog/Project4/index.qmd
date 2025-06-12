@@ -1,0 +1,167 @@
+---
+title: "From Clusters to Classifications: K-Means and KNN in R"
+author: "Aashvi"
+date: today
+---
+
+## 1. K-Means
+```{r}
+# Install & Load Required Packages
+install.packages("cluster")
+install.packages("factoextra")
+install.packages("ggplot2")
+
+library(cluster)
+library(factoextra)
+library(ggplot2)
+
+# Load and Preprocess Data
+# Update path if needed:
+penguins <- read.csv("/home/jovyan/Downloads/SPRING/Marketing Analytics/MA_demo/mysite/Blog/Project4/palmer_penguins.csv")
+
+# Keep only relevant columns
+penguins <- na.omit(penguins[, c("bill_length_mm", "flipper_length_mm")])
+
+# Normalize the data
+penguins_scaled <- scale(penguins)
+
+# Define Manual K-Means Function
+euclidean_dist <- function(a, b) sqrt(sum((a - b)^2))
+
+kmeans_manual <- function(data, k, max_iter = 100) {
+set.seed(123)
+centers <- data[sample(1:nrow(data), k), ]
+for (i in 1:max_iter) {
+    clusters <- apply(data, 1, function(x) {
+    which.min(apply(centers, 1, function(y) euclidean_dist(x, y)))
+    })
+    new_centers <- sapply(1:k, function(j) colMeans(data[clusters == j, , drop = FALSE]))
+    new_centers <- t(new_centers)
+    if (all(abs(new_centers - centers) < 1e-6)) break
+    centers <- new_centers
+}
+return(list(clusters = clusters, centers = centers))
+}
+
+# Apply Manual K-Means for K = 3
+result <- kmeans_manual(penguins_scaled, k = 3)
+penguins$manual_cluster <- as.factor(result$clusters)
+
+# Plot Manual K-Means Clusters
+ggplot(penguins, aes(bill_length_mm, flipper_length_mm, color = manual_cluster)) +
+geom_point(size = 2, alpha = 0.8) +
+ggtitle("K-Means Clustering (Manual)") +
+theme_minimal()
+
+# Compare with Built-in kmeans()
+k_builtin <- kmeans(penguins_scaled, centers = 3)
+penguins$builtin_cluster <- as.factor(k_builtin$cluster)
+
+ggplot(penguins, aes(bill_length_mm, flipper_length_mm, color = builtin_cluster)) +
+geom_point(size = 2, alpha = 0.8) +
+ggtitle("K-Means Clustering (Built-in Function)") +
+theme_minimal()
+
+# Evaluate Optimal K using WSS & Silhouette
+fviz_nbclust(penguins_scaled, kmeans, method = "wss") +
+ggtitle("Elbow Method for Optimal K")
+
+fviz_nbclust(penguins_scaled, kmeans, method = "silhouette") +
+ggtitle("Silhouette Score for Optimal K")
+
+# Bonus: Calculate Silhouette Scores for K = 2 to 7
+
+sil_scores <- numeric()
+wss_values <- numeric()
+
+for (k in 2:7) {
+km <- kmeans(penguins_scaled, centers = k)
+ss <- silhouette(km$cluster, dist(penguins_scaled))
+sil_scores[k] <- mean(ss[, 3])
+wss_values[k] <- km$tot.withinss
+}
+
+# Combine into data frame
+k_values <- 2:7
+eval_df <- data.frame(
+K = k_values,
+Silhouette = sil_scores[k_values],
+WSS = wss_values[k_values]
+)
+
+# Plot custom silhouette and WSS results
+ggplot(eval_df, aes(x = K)) +
+geom_line(aes(y = Silhouette), color = "blue") +
+geom_point(aes(y = Silhouette), color = "blue") +
+geom_line(aes(y = (WSS - min(WSS)) / (max(WSS) - min(WSS))), color = "red") +
+geom_point(aes(y = (WSS - min(WSS)) / (max(WSS) - min(WSS))), color = "red") +
+labs(title = "Silhouette (Blue) vs Normalized WSS (Red)", y = "Score (scaled)", x = "Number of Clusters (K)") +
+theme_minimal()
+
+```
+
+
+## 2. K Nearest Neighbors
+
+```{r}
+# Generate Synthetic Training Data
+set.seed(42)
+n <- 100
+x1 <- runif(n, -3, 3)
+x2 <- runif(n, -3, 3)
+boundary <- sin(4 * x1) + x1
+y <- ifelse(x2 > boundary, 1, 0) |> as.factor()
+train <- data.frame(x1 = x1, x2 = x2, y = y)
+
+# Generate Synthetic Test Data
+set.seed(99)
+x1_test <- runif(n, -3, 3)
+x2_test <- runif(n, -3, 3)
+boundary_test <- sin(4 * x1_test) + x1_test
+y_test <- ifelse(x2_test > boundary_test, 1, 0) |> as.factor()
+test <- data.frame(x1 = x1_test, x2 = x2_test, y = y_test)
+
+# Plot the Training Data
+library(ggplot2)
+ggplot(train, aes(x = x1, y = x2, color = y)) +
+geom_point(size = 2) +
+  stat_function(fun = function(x) sin(4 * x) + x, color = "black", linetype = "dashed") +
+ggtitle("Synthetic KNN Training Data with Wiggly Boundary") +
+theme_minimal()
+
+# Implement KNN Manually
+euclidean_distance <- function(a, b) {
+sqrt(sum((a - b)^2))
+}
+
+knn_predict <- function(train, test, k) {
+pred <- vector("character", nrow(test))
+for (i in 1:nrow(test)) {
+    dists <- apply(train[, c("x1", "x2")], 1, function(row) euclidean_distance(row, test[i, c("x1", "x2")]))
+    neighbors <- train[order(dists), ][1:k, ]
+    pred[i] <- names(which.max(table(neighbors$y)))
+}
+return(as.factor(pred))
+}
+
+
+# Evaluate Accuracy for k = 1 to 30
+accuracy <- numeric(30)
+for (k in 1:30) {
+pred <- knn_predict(train, test, k)
+accuracy[k] <- mean(pred == test$y)
+}
+
+# Plot Accuracy vs K
+accuracy_df <- data.frame(k = 1:30, accuracy = accuracy)
+
+ggplot(accuracy_df, aes(x = k, y = accuracy)) +
+geom_line(color = "steelblue") +
+geom_point(color = "darkred") +
+labs(title = "KNN Accuracy vs. K",
+    x = "Number of Neighbors (K)",
+    y = "Accuracy on Test Set") +
+theme_minimal()
+
+```
+
